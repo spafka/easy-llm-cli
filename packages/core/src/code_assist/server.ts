@@ -32,6 +32,7 @@ import {
   toGenerateContentRequest,
 } from './converter.js';
 import { PassThrough } from 'node:stream';
+import { logLlmEvent } from '../utils/fileLogger.js';
 
 /** HTTP options to be used in each of the requests. */
 export interface HttpOptions {
@@ -128,6 +129,13 @@ export class CodeAssistServer implements ContentGenerator {
     req: object,
     signal?: AbortSignal,
   ): Promise<T> {
+    logLlmEvent({
+      type: 'llm-request',
+      request: {
+        method,
+        req,
+      },
+    });
     const res = await this.client.request({
       url: this.getMethodUrl(method),
       method: 'POST',
@@ -138,6 +146,13 @@ export class CodeAssistServer implements ContentGenerator {
       responseType: 'json',
       body: JSON.stringify(req),
       signal,
+    });
+    logLlmEvent({
+      type: 'llm-response',
+      response: {
+        method,
+        res,
+      },
     });
     return res.data as T;
   }
